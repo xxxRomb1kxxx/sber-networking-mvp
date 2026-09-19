@@ -1,0 +1,18 @@
+# Демо-запуск в контейнере. Внешних зависимостей нет: SberBusiness ID и GigaChat
+# имитируются внутри приложения, данные лежат в томе demo-data.
+services:
+  app:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run build && npm start"
+    environment:
+      PORT: 4000
+      DB_FILE: /data/db.json
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - demo-data:/data
+
+volumes:
+  demo-data:
