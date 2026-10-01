@@ -1,0 +1,26 @@
+{
+  "name": "sberconnect-video",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Промо-ролик Сберконнекта: запись демо через Playwright, озвучка, монтаж в Remotion",
+  "scripts": {
+    "voice": "node voice.mjs",
+    "record": "node record.mjs",
+    "timeline": "node timeline.mjs",
+    "studio": "remotion studio src/index.js",
+    "render": "remotion render src/index.js Sberconnect out/sberconnect.mp4",
+    "render:vertical": "remotion render src/index.js SberconnectVertical out/sberconnect-vertical.mp4",
+    "music": "node music.mjs",
+    "elements": "node elements.mjs",
+    "all": "npm run voice && npm run record && npm run timeline && npm run music && npm run render"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.527",
+    "@remotion/google-fonts": "^4.0.527",
+    "playwright": "^1.60.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.527"
+  }
+}

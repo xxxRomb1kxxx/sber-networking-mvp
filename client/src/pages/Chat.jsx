@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useSession } from '../store.jsx';
 import Avatar from '../components/Avatar.jsx';
+import { IconChevronLeft, IconSend } from '../components/Icons.jsx';
 
 const time = (iso) =>
   new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -109,14 +110,26 @@ export default function Chat() {
   return (
     <div className="chat">
       <header className="chat-head">
-        <button className="btn-quiet" onClick={() => navigate('/matches')} aria-label="Назад">
-          ←
+        <button className="icon-btn" onClick={() => navigate('/matches')} aria-label="Назад">
+          <IconChevronLeft width={20} height={20} />
         </button>
-        <Avatar user={match.companion} />
+        <span className={`avatar-ring ${match.companion?.online ? 'online' : ''}`}>
+          <Avatar user={match.companion} />
+        </span>
         <div>
           <div className="chat-head-name">{match.companion?.fullName}</div>
           <div className="chat-head-status">
-            {typing ? 'печатает…' : match.companion?.online ? 'в сети' : 'не в сети'}
+            {typing ? (
+              <span className="typing-dots" aria-label="печатает">
+                <span />
+                <span />
+                <span />
+              </span>
+            ) : match.companion?.online ? (
+              'в сети'
+            ) : (
+              'не в сети'
+            )}
           </div>
         </div>
       </header>
@@ -157,8 +170,8 @@ export default function Chat() {
                 }
               }}
             />
-            <button className="btn" onClick={send} disabled={!text.trim()}>
-              Отправить
+            <button className="send-btn" onClick={send} disabled={!text.trim()} aria-label="Отправить">
+              <IconSend width={19} height={19} />
             </button>
           </div>
           <div className="chat-tools">

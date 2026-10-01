@@ -12,6 +12,7 @@ import { authRouter } from './routes/auth.js';
 import { profileRouter } from './routes/profile.js';
 import { feedRouter } from './routes/feed.js';
 import { matchesRouter } from './routes/matches.js';
+import { eventsRouter } from './routes/events.js';
 import { mockRouter } from './routes/mock.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/feed', feedRouter);
 app.use('/api/matches', matchesRouter);
+app.use('/api/events', eventsRouter);
 app.use('/api/mock', mockRouter);
 app.use('/mock', mockRouter);
 

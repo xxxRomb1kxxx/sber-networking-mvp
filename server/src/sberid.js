@@ -26,6 +26,7 @@ export function demoAccounts() {
       position: u.position,
       company: u.company,
       inn: u.inn,
+      photo: u.photo || null,
       avatarColor: u.avatarColor,
     }));
 }

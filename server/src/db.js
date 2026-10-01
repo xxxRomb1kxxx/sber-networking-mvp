@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.js';
 import { buildSeed } from './seed.js';
+import { buildEvents, buildEventSeed } from './events.js';
 
 const empty = {
   users: [],
@@ -21,19 +22,39 @@ const empty = {
   reports: [], // { id, matchId, fromUserId, reason, createdAt }
   matchCache: [], // { userId, queryHash, items, createdAt, source }
   authCodes: [], // { code, sberId, createdAt }
+  events: [], // { id, title, startsAt, endsAt, seats, hostId, ... }
+  eventRegistrations: [], // { id, eventId, userId, seatNo, createdAt }
+  eventMessages: [], // { id, eventId, authorId, text, createdAt }
 };
 
 let state = null;
 let writeTimer = null;
+
+function seedAll(target) {
+  target.users = buildSeed();
+  const events = buildEventSeed();
+  target.events = buildEvents();
+  target.eventRegistrations = events.registrations;
+  target.eventMessages = events.messages;
+  return target;
+}
 
 function load() {
   if (state) return state;
   try {
     const raw = fs.readFileSync(config.dbFile, 'utf8');
     state = { ...structuredClone(empty), ...JSON.parse(raw) };
+    // База из прошлой версии — мероприятий в ней ещё нет, добираем их отдельно,
+    // чтобы не терять уже накопленные профили, мэтчи и переписку.
+    if (!state.events.length) {
+      const seeded = seedAll({});
+      state.events = seeded.events;
+      state.eventRegistrations = seeded.eventRegistrations;
+      state.eventMessages = seeded.eventMessages;
+      persistNow();
+    }
   } catch {
-    state = structuredClone(empty);
-    state.users = buildSeed();
+    state = seedAll(structuredClone(empty));
     persistNow();
   }
   return state;
@@ -57,8 +78,7 @@ export const db = {
   save: persist,
   saveNow: persistNow,
   reset() {
-    state = structuredClone(empty);
-    state.users = buildSeed();
+    state = seedAll(structuredClone(empty));
     persistNow();
     return state;
   },
@@ -231,4 +251,86 @@ export function setCachedMatching(userId, queryHash, items, source) {
 export function dropCache(userId) {
   db.data.matchCache = db.data.matchCache.filter((c) => c.userId !== userId);
   db.save();
+}
+
+// --- Мероприятия ------------------------------------------------------------
+
+export function listEvents() {
+  return [...db.data.events].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+}
+
+export function findEvent(id) {
+  return db.data.events.find((e) => e.id === id) || null;
+}
+
+export function listRegistrations(eventId) {
+  return db.data.eventRegistrations
+    .filter((r) => r.eventId === eventId)
+    .sort((a, b) => a.seatNo - b.seatNo);
+}
+
+export function findRegistration(eventId, userId) {
+  return (
+    db.data.eventRegistrations.find((r) => r.eventId === eventId && r.userId === userId) || null
+  );
+}
+
+/**
+ * Занять место. Слот достаётся тому, кто пришёл раньше: номер места — это
+ * следующий свободный номер, повторно он не выдаётся, пока место не освободят.
+ *
+ * В боевой версии это транзакция с блокировкой строки мероприятия
+ * (`SELECT ... FOR UPDATE`): здесь один процесс и синхронный код, поэтому
+ * гонки за последнее место не возникает.
+ */
+export function takeSeat(event, userId) {
+  const existing = findRegistration(event.id, userId);
+  if (existing) return { registration: existing, created: false };
+
+  const taken = listRegistrations(event.id);
+  if (taken.length >= event.seats) return { registration: null, created: false, full: true };
+
+  const used = new Set(taken.map((r) => r.seatNo));
+  let seatNo = 1;
+  while (used.has(seatNo)) seatNo += 1;
+
+  const registration = {
+    id: uid(),
+    eventId: event.id,
+    userId,
+    seatNo,
+    createdAt: new Date().toISOString(),
+  };
+  db.data.eventRegistrations.push(registration);
+  db.save();
+  return { registration, created: true };
+}
+
+export function releaseSeat(eventId, userId) {
+  const before = db.data.eventRegistrations.length;
+  db.data.eventRegistrations = db.data.eventRegistrations.filter(
+    (r) => !(r.eventId === eventId && r.userId === userId)
+  );
+  const released = db.data.eventRegistrations.length !== before;
+  if (released) db.save();
+  return released;
+}
+
+export function listEventMessages(eventId) {
+  return db.data.eventMessages
+    .filter((m) => m.eventId === eventId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export function addEventMessage(eventId, authorId, text) {
+  const message = {
+    id: uid(),
+    eventId,
+    authorId,
+    text,
+    createdAt: new Date().toISOString(),
+  };
+  db.data.eventMessages.push(message);
+  db.save();
+  return message;
 }

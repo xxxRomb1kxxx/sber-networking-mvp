@@ -50,18 +50,17 @@ export default function Matches() {
     <div>
       <div className="page-head">
         <h1>Мэтчи</h1>
-        <p>Диалоги с теми, кто ответил вам взаимностью.</p>
+        <p>Диалоги с теми, кто ответил взаимностью.</p>
       </div>
 
-      <div className="stack">
+      <div className="match-list">
         {matches.map((m) => (
           <Link key={m.id} to={`/chat/${m.id}`} className="match-row">
-            <Avatar user={m.companion} />
+            <span className={`avatar-ring ${m.companion?.online ? 'online' : ''}`}>
+              <Avatar user={m.companion} />
+            </span>
             <div className="match-row-body">
-              <div className="match-row-name">
-                {m.companion?.fullName}
-                {m.companion?.online && <span className="online-dot" title="В сети" />}
-              </div>
+              <div className="match-row-name">{m.companion?.fullName}</div>
               <div className="match-row-last">
                 {m.lastMessage?.text || m.companion?.company || 'Диалог ещё не начат'}
               </div>

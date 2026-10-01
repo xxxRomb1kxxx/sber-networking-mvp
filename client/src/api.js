@@ -32,7 +32,8 @@ export async function api(path, { method = 'GET', body } = {}) {
   if (!res.ok) {
     if (res.status === 401) {
       clearToken();
-      if (!location.pathname.startsWith('/login')) location.href = '/login?expired=1';
+      const login = `${import.meta.env.BASE_URL}login`;
+      if (!location.pathname.startsWith(login)) location.href = `${login}?expired=1`;
     }
     throw new ApiError(payload, res.status);
   }

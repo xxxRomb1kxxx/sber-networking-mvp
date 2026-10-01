@@ -26,7 +26,7 @@ profileRouter.put('/', (req, res) => {
     about: (b.about ?? req.user.about) || '',
     request: (b.request ?? req.user.request) || '',
     tags: tags.slice(0, 10),
-    avatarColor: b.avatarColor ?? req.user.avatarColor ?? '#21A038',
+    avatarColor: b.avatarColor ?? req.user.avatarColor ?? '#47541F',
     privacy: { ...(req.user.privacy || {}), ...(b.privacy || {}) },
   };
 

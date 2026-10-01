@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:pages": "vite build --outDir dist-pages && cp dist-pages/index.html dist-pages/404.html",
     "preview": "vite preview"
   },
   "dependencies": {

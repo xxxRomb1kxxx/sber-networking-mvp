@@ -6,11 +6,13 @@ import CandidateCard from '../components/CandidateCard.jsx';
 import Avatar from '../components/Avatar.jsx';
 
 export default function Feed() {
-  const { user, dictionaries } = useSession();
+  const { user, setUser, dictionaries } = useSession();
   const navigate = useNavigate();
   const [state, setState] = useState({ status: 'loading', items: [], source: null, notice: null });
   const [busy, setBusy] = useState(false);
   const [match, setMatch] = useState(null);
+  const [query, setQuery] = useState(user.request || '');
+  const [queryBusy, setQueryBusy] = useState(false);
 
   const load = useCallback(async (refresh = false) => {
     setState((s) => ({ ...s, status: 'loading' }));
@@ -25,6 +27,21 @@ export default function Feed() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const submitQuery = async () => {
+    const value = query.trim();
+    if (!value || queryBusy) return;
+    setQueryBusy(true);
+    try {
+      const { user: updated } = await api('/profile', { method: 'PUT', body: { request: value } });
+      setUser(updated);
+      await load(true);
+    } catch (e) {
+      setState((s) => ({ ...s, notice: e.message }));
+    } finally {
+      setQueryBusy(false);
+    }
+  };
 
   const decide = async (value) => {
     const current = state.items[0];
@@ -44,37 +61,51 @@ export default function Feed() {
     }
   };
 
-  if (state.status === 'error') {
-    return (
-      <div className="empty">
-        <h2>Подбор недоступен</h2>
-        <p style={{ marginBottom: 18 }}>{state.error}</p>
-        <button className="btn" onClick={() => navigate('/profile')}>
-          Открыть профиль
-        </button>
-      </div>
-    );
-  }
-
   const sourceLabel = {
     gigachat: 'Подбор GigaChat',
     cache: 'Из кэша подбора',
     fallback: 'Базовый подбор без ИИ',
   }[state.source];
 
+  const queryChanged = query.trim() !== (user.request || '').trim();
+
   return (
     <div>
       <div className="page-head">
         <h1>Кто вам подходит</h1>
-        <p>Запрос: {user.request || 'не задан'}</p>
+        <p>Опишите, кого ищете, — ИИ подберёт предпринимателей и объяснит совместимость каждого.</p>
       </div>
 
-      <div className="feed-meta">
-        <span>{sourceLabel || ' '}</span>
-        <button className="btn-quiet" onClick={() => load(true)} disabled={state.status === 'loading'}>
-          Пересчитать
-        </button>
+      <div className="query-panel">
+        <span className="field-label">Кого вы ищете</span>
+        <div className="query-row">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submitQuery();
+            }}
+            placeholder="Например: ищу поставщика замороженной ягоды для кондитерского производства в ЦФО"
+          />
+          <button
+            className="btn query-submit"
+            onClick={submitQuery}
+            disabled={queryBusy || !query.trim() || (!queryChanged && state.status === 'ready')}
+          >
+            {queryBusy ? '…' : 'Найти'}
+          </button>
+        </div>
       </div>
+
+      {state.status !== 'error' && (
+        <div className="feed-meta">
+          <span>{sourceLabel || ' '}</span>
+          <button className="btn-quiet" onClick={() => load(true)} disabled={state.status === 'loading'}>
+            Пересчитать
+          </button>
+        </div>
+      )}
 
       {state.notice && <div className="notice-box" style={{ marginBottom: 14 }}>{state.notice}</div>}
 
@@ -85,16 +116,37 @@ export default function Feed() {
         </div>
       )}
 
+      {state.status === 'error' && state.code === 'request_empty' && (
+        <div className="empty">
+          <h2>Опишите, кого ищете</h2>
+          <p>Введите запрос выше и нажмите «Найти» — по этому тексту ИИ подберёт предпринимателей.</p>
+        </div>
+      )}
+
+      {state.status === 'error' && state.code === 'profile_incomplete' && (
+        <div className="empty">
+          <h2>Подбор недоступен</h2>
+          <p style={{ marginBottom: 18 }}>{state.error}</p>
+          <button className="btn" onClick={() => navigate('/profile')}>
+            Открыть профиль
+          </button>
+        </div>
+      )}
+
+      {state.status === 'error' && !['request_empty', 'profile_incomplete'].includes(state.code) && (
+        <div className="empty">
+          <h2>Подбор недоступен</h2>
+          <p>{state.error}</p>
+        </div>
+      )}
+
       {state.status === 'ready' && state.items.length === 0 && (
         <div className="empty">
           <h2>Кандидаты закончились</h2>
-          <p style={{ marginBottom: 18 }}>
-            Вы просмотрели всех, кто подходит под текущий запрос. Измените формулировку в профиле —
+          <p>
+            Вы просмотрели всех, кто подходит под текущий запрос. Уточните формулировку выше —
             подбор пересчитается.
           </p>
-          <button className="btn" onClick={() => navigate('/profile')}>
-            Изменить запрос
-          </button>
         </div>
       )}
 

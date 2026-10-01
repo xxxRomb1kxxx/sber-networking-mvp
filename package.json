@@ -2,13 +2,14 @@
   "name": "sber-networking-mvp",
   "version": "0.1.0",
   "private": true,
-  "description": "MVP «Деловые знакомства» для СберБизнеса — демо-версия с полностью замоканными интеграциями",
+  "description": "«Сберконнект» — MVP деловых знакомств и встреч для СберБизнеса, демо-версия с полностью замоканными интеграциями",
   "workspaces": ["server", "client"],
   "scripts": {
     "dev": "concurrently -n server,client -c green,cyan \"npm:dev:server\" \"npm:dev:client\"",
     "dev:server": "npm run dev --workspace server",
     "dev:client": "npm run dev --workspace client",
     "build": "npm run build --workspace client",
+    "build:pages": "npm run build:pages --workspace client",
     "start": "npm run build && npm run start --workspace server",
     "seed:reset": "npm run seed:reset --workspace server"
   },

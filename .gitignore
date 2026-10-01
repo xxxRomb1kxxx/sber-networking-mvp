@@ -1,6 +1,12 @@
 node_modules/
 dist/
+dist-pages/
 server/data/
 .env
 .DS_Store
 *.log
+
+# Локальные файлы: настройки IDE, фото и записи для ролика и карточек
+.idea/
+cards/
+video/public/

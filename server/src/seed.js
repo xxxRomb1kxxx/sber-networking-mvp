@@ -373,6 +373,41 @@ const raw = [
   },
 ];
 
+/**
+ * Демо-фото профилей: по одному на предпринимателя, в порядке массива raw выше.
+ *
+ * Отбирались вручную по четырём признакам: деловой вид (рубашка, пиджак,
+ * опрятный кадр), спокойное выражение лица, нейтральный или размытый фон и
+ * крупный план — поясные снимки в круглом аватаре 38px превращают лицо в точку.
+ * Исключены студийно-модные и художественные портреты, головные уборы, тёмные
+ * очки, а также диапазон male/42–71: там лежат сгенерированные лица, которые
+ * выдают себя пластиковой кожей и пустым фоном.
+ *
+ * Пол фотографии соответствует имени профиля.
+ */
+const PHOTOS = [
+  'https://xsgames.co/randomusers/assets/avatars/female/21.jpg', // Марина Кольцова
+  'https://xsgames.co/randomusers/assets/avatars/male/7.jpg', // Артём Бельский
+  'https://xsgames.co/randomusers/assets/avatars/female/18.jpg', // Ольга Пенькова
+  'https://xsgames.co/randomusers/assets/avatars/male/2.jpg', // Дмитрий Хавин
+  'https://xsgames.co/randomusers/assets/avatars/female/17.jpg', // Ирина Савельева
+  'https://xsgames.co/randomusers/assets/avatars/male/25.jpg', // Сергей Демидов
+  'https://xsgames.co/randomusers/assets/avatars/female/19.jpg', // Наталья Гринёва
+  'https://xsgames.co/randomusers/assets/avatars/male/41.jpg', // Павел Лунёв
+  'https://xsgames.co/randomusers/assets/avatars/male/9.jpg', // Алексей Тарасов
+  'https://xsgames.co/randomusers/assets/avatars/female/23.jpg', // Екатерина Мороз
+  'https://xsgames.co/randomusers/assets/avatars/male/72.jpg', // Рустам Валиев
+  'https://xsgames.co/randomusers/assets/avatars/female/20.jpg', // Анна Ветрова
+  'https://xsgames.co/randomusers/assets/avatars/male/37.jpg', // Игорь Пешков
+  'https://xsgames.co/randomusers/assets/avatars/female/55.jpg', // Светлана Рожкова
+  'https://xsgames.co/randomusers/assets/avatars/male/8.jpg', // Кирилл Асташев
+  'https://xsgames.co/randomusers/assets/avatars/male/75.jpg', // Марат Юсупов
+  'https://xsgames.co/randomusers/assets/avatars/female/22.jpg', // Виктория Ланская
+  'https://xsgames.co/randomusers/assets/avatars/male/26.jpg', // Андрей Бортник
+  'https://xsgames.co/randomusers/assets/avatars/female/77.jpg', // Елена Тихая
+  'https://xsgames.co/randomusers/assets/avatars/male/35.jpg', // Максим Гурин
+];
+
 export function buildSeed() {
   const now = new Date().toISOString();
   return raw.map((r, i) => ({
@@ -391,6 +426,7 @@ export function buildSeed() {
     about: r.about,
     request: r.request,
     avatar: null,
+    photo: PHOTOS[i],
     avatarColor: r.avatarColor,
     privacy: { showCompany: true, showPosition: true, showRegion: true },
     profileComplete: true,

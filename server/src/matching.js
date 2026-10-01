@@ -18,7 +18,8 @@ export function publicProfile(user) {
     about: user.about,
     request: user.request,
     avatar: user.avatar,
-    avatarColor: user.avatarColor || '#21A038',
+    photo: user.photo || null,
+    avatarColor: user.avatarColor || '#47541F',
   };
 }
 

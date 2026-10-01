@@ -1,12 +1,24 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { useSession } from '../store.jsx';
+import { useCountUp } from '../hooks/useCountUp.js';
 
 const privacyLabels = {
   showCompany: ['Показывать компанию', 'Название юрлица видно в карточке'],
   showPosition: ['Показывать должность', 'Роль видна до начала диалога'],
   showRegion: ['Показывать регион', 'Город виден в карточке кандидата'],
 };
+
+function AnimatedStat({ value, suffix = '' }) {
+  const animated = useCountUp(typeof value === 'number' ? value : 0);
+  if (typeof value !== 'number') return <b>—</b>;
+  return (
+    <b>
+      {animated}
+      {suffix}
+    </b>
+  );
+}
 
 export default function Settings() {
   const { user, setUser, logout } = useSession();
@@ -69,20 +81,28 @@ export default function Settings() {
           <h2 style={{ marginBottom: 12 }}>Метрики MVP</h2>
           <div className="metrics">
             <div className="metric">
-              <b>{metrics.registeredUsers}</b>
+              <AnimatedStat value={metrics.registeredUsers} />
               <span>вошли через СберБизнес ID</span>
             </div>
             <div className="metric">
-              <b>{metrics.profilesCompletedPct}%</b>
+              <AnimatedStat value={metrics.profilesCompletedPct} suffix="%" />
               <span>профилей заполнено</span>
             </div>
             <div className="metric">
-              <b>{metrics.matchRatePct}%</b>
+              <AnimatedStat value={metrics.matchRatePct} suffix="%" />
               <span>взаимных от всех лайков</span>
             </div>
             <div className="metric">
-              <b>{metrics.avgMinutesToFirstMessage ?? '—'}</b>
+              <AnimatedStat value={metrics.avgMinutesToFirstMessage} />
               <span>минут до первого сообщения</span>
+            </div>
+            <div className="metric">
+              <AnimatedStat value={metrics.seatsFilledPct} suffix="%" />
+              <span>мест на встречах занято</span>
+            </div>
+            <div className="metric">
+              <AnimatedStat value={metrics.eventSignups} />
+              <span>записей на встречи</span>
             </div>
           </div>
         </div>
@@ -154,9 +174,9 @@ export default function Settings() {
               style={{
                 whiteSpace: 'pre-wrap',
                 fontSize: 12.5,
-                background: '#F5F5F5',
+                background: 'var(--surface-sunk)',
                 padding: 12,
-                borderRadius: 8,
+                borderRadius: 'var(--r-xs)',
                 marginTop: 12,
                 lineHeight: 1.5,
               }}

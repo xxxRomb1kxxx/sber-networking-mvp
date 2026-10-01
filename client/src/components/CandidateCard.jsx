@@ -1,8 +1,11 @@
 import { useRef, useState } from 'react';
-import Avatar from './Avatar.jsx';
+import { useCountUp } from '../hooks/useCountUp.js';
+import Meter from './Meter.jsx';
+import { IconHeart, IconClose } from './Icons.jsx';
 
 export default function CandidateCard({ item, goals, onDecide, busy }) {
   const { profile, score, reason, tags } = item;
+  const displayScore = useCountUp(score);
   const [dx, setDx] = useState(0);
   const startX = useRef(null);
 
@@ -20,6 +23,11 @@ export default function CandidateCard({ item, goals, onDecide, busy }) {
   };
 
   const goalNames = (profile.goals || []).map((g) => goals[g]).filter(Boolean);
+  const initials = (profile.fullName || '?')
+    .split(' ')
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join('');
 
   return (
     <article
@@ -29,32 +37,42 @@ export default function CandidateCard({ item, goals, onDecide, busy }) {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <div className="candidate-top">
-        <Avatar user={profile} />
-        <div>
+      <header className="candidate-head">
+        <div className="candidate-portrait">
+          {profile.photo ? (
+            <img src={profile.photo} alt={profile.fullName} />
+          ) : (
+            <div
+              className="candidate-photo-fallback"
+              style={{ background: profile.avatarColor || '#0A6E38' }}
+            >
+              {initials}
+            </div>
+          )}
+        </div>
+
+        <div className="candidate-ident">
           <div className="candidate-name">{profile.fullName}</div>
           <div className="candidate-role">
             {[profile.position, profile.company].filter(Boolean).join(', ') || 'Данные скрыты'}
           </div>
+          {profile.region && <div className="candidate-region">{profile.region}</div>}
         </div>
-      </div>
 
-      <div className="score">
-        <div className="score-row">
-          <span className="score-value">{score}%</span>
-          <span className="score-caption">совместимость по вашему запросу</span>
-        </div>
-        <div className="score-bar">
-          <span style={{ width: `${score}%` }} />
-        </div>
-      </div>
-
-      <div className="reason">
-        <div className="reason-head">Почему подходит</div>
-        {reason}
-      </div>
+        <Meter
+          percent={score}
+          label={`${displayScore}%`}
+          tone={score >= 50 ? 'brand' : 'amber'}
+          size="md"
+        />
+      </header>
 
       <div className="candidate-body">
+        <div className="reason">
+          <div className="reason-head">Почему подходит на {displayScore}%</div>
+          {reason}
+        </div>
+
         <dl className="candidate-facts">
           <dt>Отрасль</dt>
           <dd>{profile.industry || '—'}</dd>
@@ -80,14 +98,16 @@ export default function CandidateCard({ item, goals, onDecide, busy }) {
         )}
       </div>
 
-      <div className="decide">
+      <footer className="candidate-actions">
         <button className="btn btn-ghost" disabled={busy} onClick={() => onDecide('skip')}>
+          <IconClose width={17} height={17} />
           Пропустить
         </button>
         <button className="btn" disabled={busy} onClick={() => onDecide('like')}>
+          <IconHeart width={17} height={17} />
           Интересно
         </button>
-      </div>
+      </footer>
     </article>
   );
 }

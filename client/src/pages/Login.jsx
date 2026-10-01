@@ -15,10 +15,13 @@ export default function Login() {
     try {
       const { authorizeUrl, state } = await api('/auth/sberid/start', {
         method: 'POST',
-        body: { redirectUri: `${location.origin}/auth/callback` },
+        body: { redirectUri: `${location.origin}${import.meta.env.BASE_URL}auth/callback` },
       });
       sessionStorage.setItem('sbn.state', state);
-      location.href = authorizeUrl;
+      // Экран имитации провайдера отдаёт наш же сервер — путь от корня приложения.
+      location.href = authorizeUrl.startsWith('/')
+        ? import.meta.env.BASE_URL.replace(/\/$/, '') + authorizeUrl
+        : authorizeUrl;
     } catch (e) {
       setError(e.message);
       setBusy(false);
@@ -28,11 +31,10 @@ export default function Login() {
   return (
     <div className="login">
       <div className="login-brand">
-        <span className="dot" />
-        СберБизнес
+        <span className="brand-logo brand-logo--md">Сберконнект</span>
       </div>
 
-      <h1>Деловые знакомства для клиентов СберБизнеса</h1>
+      <h1>Деловые знакомства и встречи СберБизнеса</h1>
       <p className="login-lead">
         Опишите, кого вы ищете. ИИ разберёт запрос, найдёт подходящих предпринимателей в закрытой
         базе и объяснит, почему каждый из них вам полезен.
@@ -49,10 +51,13 @@ export default function Login() {
           <b>Закрытый круг</b> Только действующие клиенты СберБизнеса с подтверждённым ИНН
         </li>
         <li>
-          <b>Подбор</b> Кандидаты ранжируются по совместимости с обоснованием
+          <b>Подбор</b> Кандидаты ранжируются по совместимости, с обоснованием по каждому
         </li>
         <li>
-          <b>Чат</b> Открывается только при взаимном интересе
+          <b>Чат</b> Открывается при взаимном интересе
+        </li>
+        <li>
+          <b>Встречи</b> Мастер-классы и разборы клуба, места — в порядке очереди
         </li>
       </ul>
 

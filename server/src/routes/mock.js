@@ -18,7 +18,11 @@ mockRouter.get('/sberid/authorize', (req, res) => {
     .map(
       (a) => `
       <a class="acc" href="/mock/sberid/approve?sberId=${encodeURIComponent(a.sberId)}&state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}">
-        <span class="ava" style="background:${esc(a.avatarColor)}">${esc(a.fullName.slice(0, 1))}</span>
+        ${
+          a.photo
+            ? `<img class="ava" src="${esc(a.photo)}" alt="" />`
+            : `<span class="ava" style="background:${esc(a.avatarColor)}">${esc(a.fullName.slice(0, 1))}</span>`
+        }
         <span class="acc-body">
           <span class="acc-name">${esc(a.fullName)}</span>
           <span class="acc-meta">${esc(a.position)} · ${esc(a.company)}</span>
@@ -49,7 +53,7 @@ mockRouter.get('/sberid/authorize', (req, res) => {
          text-decoration:none; color:inherit; border:1px solid var(--line); border-radius:12px }
   .acc:hover, .acc:focus-visible { border-color:var(--green); outline:none }
   .ava { width:40px; height:40px; border-radius:50%; color:#fff; display:grid; place-items:center;
-         font-weight:600; flex:none }
+         font-weight:600; flex:none; object-fit:cover; background:#e4e7ec }
   .acc-body { display:flex; flex-direction:column; gap:2px; min-width:0 }
   .acc-name { font-weight:600; font-size:15px }
   .acc-meta { font-size:13px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
@@ -61,7 +65,7 @@ mockRouter.get('/sberid/authorize', (req, res) => {
 </style></head>
 <body><div class="sheet">
   <div class="brand"><span class="dot"></span><b>СберБизнес ID</b></div>
-  <h1>Вход в «Деловые знакомства»</h1>
+  <h1>Вход в «Сберконнект»</h1>
   <p class="lead">Сервис запросит данные вашей компании, чтобы подтвердить, что вы клиент СберБизнеса.</p>
   <div class="demo">Это имитация провайдера для демо. Реальный СберБизнес ID не вызывается, пароль не запрашивается. Выберите любую тестовую компанию.</div>
   ${cards}
@@ -113,9 +117,16 @@ mockRouter.post('/reset', (req, res) => {
 
 /** Метрики успеха MVP (п. 13 ТЗ) — считаются по демо-базе. */
 mockRouter.get('/metrics', (req, res) => {
-  const { users, likes, matches, messages } = db.data;
+  const { users, likes, matches, messages, events, eventRegistrations } = db.data;
   const real = users.filter((u) => !u.isSeed);
   const likeCount = likes.filter((l) => l.value === 'like').length;
+  // Записи, сделанные в приложении: у предзаполненных id начинается с «reg-».
+  const liveSignups = eventRegistrations.filter((r) => !r.id.startsWith('reg-')).length;
+  const upcoming = events.filter((e) => new Date(e.endsAt) >= new Date());
+  const seats = upcoming.reduce((n, e) => n + e.seats, 0);
+  const taken = eventRegistrations.filter((r) =>
+    upcoming.some((e) => e.id === r.eventId)
+  ).length;
 
   const firstReply = matches
     .map((m) => {
@@ -137,5 +148,8 @@ mockRouter.get('/metrics', (req, res) => {
     avgMinutesToFirstMessage: firstReply.length
       ? Math.round(firstReply.reduce((a, b) => a + b, 0) / firstReply.length / 60000)
       : null,
+    upcomingEvents: upcoming.length,
+    seatsFilledPct: seats ? Math.round((taken / seats) * 100) : 0,
+    eventSignups: liveSignups,
   });
 });

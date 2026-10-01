@@ -4,7 +4,16 @@
  */
 import { Server } from 'socket.io';
 import { readSessionToken } from './sberid.js';
-import { findUser, findMatch, listMatches, addMessage, markRead } from './db.js';
+import {
+  findUser,
+  findMatch,
+  listMatches,
+  addMessage,
+  markRead,
+  findRegistration,
+  addEventMessage,
+  findEvent,
+} from './db.js';
 import { config } from './config.js';
 
 let io = null;
@@ -16,6 +25,17 @@ export function isOnline(userId) {
 
 function room(userId) {
   return `user:${userId}`;
+}
+
+function eventRoom(eventId) {
+  return `event:${eventId}`;
+}
+
+/** Писать и читать чат встречи могут участники и ведущий. */
+function canChat(eventId, userId) {
+  const event = findEvent(eventId);
+  if (!event) return false;
+  return event.hostId === userId || Boolean(findRegistration(eventId, userId));
 }
 
 export function initWs(httpServer) {
@@ -61,6 +81,26 @@ export function initWs(httpServer) {
       if (!match || !match.userIds.includes(userId)) return;
       const otherId = match.userIds.find((id) => id !== userId);
       io.to(room(otherId)).emit('typing', { matchId, userId, typing: Boolean(typing) });
+    });
+
+    // --- Чат мероприятия: общая комната для тех, кто занял место -------------
+
+    socket.on('event:join', ({ eventId }) => {
+      if (!eventId || !canChat(eventId, userId)) return;
+      socket.join(eventRoom(eventId));
+    });
+
+    socket.on('event:leave', ({ eventId }) => {
+      if (eventId) socket.leave(eventRoom(eventId));
+    });
+
+    socket.on('event:message', ({ eventId, text }, ack) => {
+      const body = String(text || '').trim();
+      if (!eventId || !body) return ack?.({ ok: false });
+      if (!canChat(eventId, userId)) return ack?.({ ok: false, error: 'not_registered' });
+      const message = addEventMessage(eventId, userId, body.slice(0, 2000));
+      notifyEventMessage(eventId, message);
+      ack?.({ ok: true, message });
     });
 
     socket.on('disconnect', () => {
@@ -109,4 +149,15 @@ export function notifyMatch(match) {
   for (const id of match.userIds) {
     io.to(room(id)).emit('match', { matchId: match.id });
   }
+}
+
+export function notifyEventMessage(eventId, message) {
+  if (!io) return;
+  io.to(eventRoom(eventId)).emit('event:message', { eventId, message });
+}
+
+/** Счётчик мест меняется у всех, кто сейчас смотрит раздел мероприятий. */
+export function notifyEventSeats(eventId, seatsTaken, seats) {
+  if (!io) return;
+  io.emit('event:seats', { eventId, seatsTaken, seats });
 }

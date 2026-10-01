@@ -1,0 +1,81 @@
+{
+  "fps": 30,
+  "overlap": 18,
+  "totalFrames": 2778,
+  "intro": {
+    "from": 0,
+    "frames": 516
+  },
+  "demo": {
+    "from": 498,
+    "frames": 1959
+  },
+  "outro": {
+    "from": 2439,
+    "frames": 339
+  },
+  "scenes": [
+    {
+      "id": "login",
+      "from": 498,
+      "frames": 375
+    },
+    {
+      "id": "feed",
+      "from": 873,
+      "frames": 438
+    },
+    {
+      "id": "match",
+      "from": 1311,
+      "frames": 439
+    },
+    {
+      "id": "events",
+      "from": 1750,
+      "frames": 424
+    },
+    {
+      "id": "full",
+      "from": 2174,
+      "frames": 283
+    }
+  ],
+  "audio": [
+    {
+      "id": "intro",
+      "from": 15,
+      "frames": 453
+    },
+    {
+      "id": "login",
+      "from": 513,
+      "frames": 333
+    },
+    {
+      "id": "feed",
+      "from": 888,
+      "frames": 396
+    },
+    {
+      "id": "match",
+      "from": 1326,
+      "frames": 397
+    },
+    {
+      "id": "events",
+      "from": 1765,
+      "frames": 382
+    },
+    {
+      "id": "full",
+      "from": 2189,
+      "frames": 242
+    },
+    {
+      "id": "outro",
+      "from": 2472,
+      "frames": 276
+    }
+  ]
+}
